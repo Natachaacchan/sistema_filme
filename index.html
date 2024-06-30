@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciamento de Filmes e Diretores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        h2 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Cadastro de Diretores</h2>
+        <form id="formDiretor">
+            <label for="nomeDiretor">Nome</label>
+            <input type="text" id="nomeDiretor" name="nome" required>
+            
+            <label for="dataNascimento">Data de Nascimento</label>
+            <input type="date" id="dataNascimento" name="data_nascimento" required>
+            
+            <label for="nacionalidade">Nacionalidade</label>
+            <input type="text" id="nacionalidade" name="nacionalidade" required>
+            
+            <button type="button" onclick="incluirDiretor()">Incluir Diretor</button>
+        </form>
+        
+        <h2>Cadastro de Filmes</h2>
+        <form id="formFilme">
+            <label for="titulo">Título</label>
+            <input type="text" id="titulo" name="titulo" required>
+            
+            <label for="anoLancamento">Ano de Lançamento</label>
+            <input type="number" id="anoLancamento" name="ano_lancamento" required>
+            
+            <label for="genero">Gênero</label>
+            <input type="text" id="genero" name="genero" required>
+            
+            <label for="diretorId">Diretor</label>
+            <select id="diretorId" name="diretor_id" required></select>
+            
+            <button type="button" onclick="incluirFilme()">Incluir Filme</button>
+        </form>
+        
+        <h2>Lista de Diretores</h2>
+        <table id="listaDiretores">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Data de Nascimento</th>
+                    <th>Nacionalidade</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        
+        <h2>Lista de Filmes</h2>
+        <table id="listaFilmes">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Ano de Lançamento</th>
+                    <th>Gênero</th>
+                    <th>Diretor</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+        async function fetchData(url, method = 'GET', body = null) {
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body ? JSON.stringify(body) : null
+            });
+            return response.json();
+        }
+
+        async function carregarDiretores() {
+            const diretores = await fetchData('/diretores');
+            const diretorSelect = document.getElementById('diretorId');
+            diretorSelect.innerHTML = '';
+            diretores.forEach(diretor => {
+                const option = document.createElement('option');
+                option.value = diretor.id;
+                option.textContent = diretor.nome;
+                diretorSelect.appendChild(option);
+            });
+            atualizarListaDiretores(diretores);
+        }
+
+        function atualizarListaDiretores(diretores) {
+            const listaDiretores = document.getElementById('listaDiretores').querySelector('tbody');
+            listaDiretores.innerHTML = '';
+            diretores.forEach(diretor => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${diretor.id}</td>
+                    <td>${diretor.nome}</td>
+                    <td>${diretor.data_nascimento}</td>
+                    <td>${diretor.nacionalidade}</td>
+                `;
+                listaDiretores.appendChild(row);
+            });
+        }
+
+        async function carregarFilmes() {
+            const filmes = await fetchData('/filmes');
+            const listaFilmes = document.getElementById('listaFilmes').querySelector('tbody');
+            listaFilmes.innerHTML = '';
+            filmes.forEach(filme => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${filme.id}</td>
+                    <td>${filme.titulo}</td>
+                    <td>${filme.ano_lancamento}</td>
+                    <td>${filme.genero}</td>
+                    <td>${filme.diretor_nome}</td>
+                `;
+                listaFilmes.appendChild(row);
+            });
+        }
+
+        async function incluirDiretor() {
+            const form = document.getElementById('formDiretor');
+            const data = {
+                nome: form.nome.value,
+                data_nascimento: form.data_nascimento.value,
+                nacionalidade: form.nacionalidade.value
+            };
+            await fetchData('/diretores', 'POST', data);
+            form.reset();
+            carregarDiretores();
+        }
+
+        async function incluirFilme() {
+            const form = document.getElementById('formFilme');
+            const data = {
+                titulo: form.titulo.value,
+                ano_lancamento: form.ano_lancamento.value,
+                genero: form.genero.value,
+                diretor_id: form.diretor_id.value
+            };
+            await fetchData('/filmes', 'POST', data);
+            form.reset();
+            carregarFilmes();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarDiretores();
+            carregarFilmes();
+        });
+    </script>
+</body>
+</html>
